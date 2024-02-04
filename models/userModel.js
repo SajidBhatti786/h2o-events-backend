@@ -6,7 +6,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "name is required"],
     },
-
+    profileImage: {
+      type: String,
+      default: "",
+    },
     phone_number: {
       type: String,
 

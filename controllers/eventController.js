@@ -1,6 +1,7 @@
 const Event = require("../models/eventModel"); // Adjust the path accordingly
 const Ticket = require("../models/ticketModel");
 const User = require("../models/userModel");
+const { uploadMultipleFiles } = require("../utils/fileUploadUtil");
 // Controller to create a new event
 const createEvent = async (req, res) => {
   try {
@@ -8,23 +9,52 @@ const createEvent = async (req, res) => {
     const userId = req.decoded.id;
 
     // Extracting event information from the request body
+    // Extracting non-file fields from the request body
     const { title, description, date, time, venue, totalSeats, ticketPrice } =
       req.body;
 
+    // Extracting images from the request files
+    console.log(req.body);
+
+    // Assuming you've configured multer properly
+    const images = req.files;
+    console.log(images);
+    // // Iterate over the array of image data and save references in the event's images array
+    // for (const imageData of images) {
+    //   // Assuming imageData is an object containing information about the image
+    //   const newImage = new Image({
+    //     url: imageData.url, // Store the Cloudinary URL or other reference
+    //     description: imageData.description,
+    //     // Add other image-related fields as needed
+    //   });
+
+    //   // Save the new image to the database
+    //   const savedImage = await newImage.save();
+
+    //   // Add the saved image reference to the event's images array
+    //   newEvent.images.push(savedImage._id);
+    // }
+    const newImages = await uploadMultipleFiles(images);
+    // console.log(newImages);
+    const uploadingImages = [];
+    for (img in newImages) {
+      uploadingImages.push(newImages[img].imageUrl);
+    }
+    // Saving the new event to the database
     // Creating a new event object
+    console.log(uploadingImages);
     const newEvent = new Event({
       title,
       description,
+      images: uploadingImages,
       date,
       time,
       venue,
       totalSeats,
       availableSeats: totalSeats,
       ticketPrice,
-      createdBy: userId, // Assigning the user ID to the createdBy field
+      createdBy: userId,
     });
-
-    // Saving the new event to the database
     const savedEvent = await newEvent.save();
 
     res
@@ -35,6 +65,7 @@ const createEvent = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 const updateEvent = async (req, res) => {
   console.log(updateEvent);
   try {

@@ -10,6 +10,11 @@ const eventSchema = new mongoose.Schema(
       type: String,
       required: [true, "Description is required"],
     },
+    images: [
+      {
+        type: String, // Assuming each element in the array is a URL
+      },
+    ],
     date: {
       type: Date,
       required: [true, "Date is required"],
