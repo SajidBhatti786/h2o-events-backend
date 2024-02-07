@@ -18,7 +18,7 @@ router.get(
 );
 router.put(
   "/update-event",
-
+  uploadMultipleMiddleware,
   authMiddleware.isAdminVerifier,
   eventController.updateEvent
 );
@@ -26,6 +26,11 @@ router.get(
   "/:eventId",
   authMiddleware.authenticationVerifier,
   eventController.getSingleEvent
+);
+router.delete(
+  "/delete-image",
+  authMiddleware.authenticationVerifier,
+  eventController.deleteEventImage
 );
 
 module.exports = router;

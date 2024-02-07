@@ -29,6 +29,12 @@ const createEvent = async (req, res) => {
     // Extracting images from the request files
     console.log(req.body);
     const images = req.files;
+    if (images.length == 0) {
+      return res.status(400).json({
+        status: 400,
+        message: "All the fields are required",
+      });
+    }
     // // Iterate over the array of image data and save references in the event's images array
     // for (const imageData of images) {
     //   // Assuming imageData is an object containing information about the image
@@ -77,7 +83,9 @@ const createEvent = async (req, res) => {
 };
 
 const updateEvent = async (req, res) => {
-  console.log(updateEvent);
+  // console.log(updateEvent);
+  const images = req.files;
+  console.log(images);
   try {
     const eventId = req.body.eventId;
     const userId = req.decoded.id;
@@ -99,6 +107,27 @@ const updateEvent = async (req, res) => {
     // Extract updated event information from the request body
     const { title, description, date, time, venue, totalSeats, ticketPrice } =
       req.body;
+    if (
+      !title ||
+      !description ||
+      !date ||
+      !time ||
+      !venue ||
+      !ticketPrice ||
+      !totalSeats
+    ) {
+      return res.status(400).json({
+        status: 400,
+        message: "All the fields are required",
+      });
+    }
+
+    if (images.length + existingEvent.images.length == 0) {
+      return res.status(400).json({
+        status: 400,
+        message: "All the fields are required",
+      });
+    }
     let reservedSeats = existingEvent.totalSeats - existingEvent.availableSeats;
     if (reservedSeats > totalSeats) {
       return res.status(400).json({
@@ -107,8 +136,15 @@ const updateEvent = async (req, res) => {
       });
     }
     // Update the existing event fields
+    const newImages = await uploadMultipleFiles(images);
+    // console.log(newImages);
+    const uploadingImages = [];
+    for (img in newImages) {
+      uploadingImages.push(newImages[img].imageUrl);
+    }
     existingEvent.title = title;
     existingEvent.description = description;
+    existingEvent.images = existingEvent.images.concat(uploadingImages);
     existingEvent.date = date;
     existingEvent.time = time;
     existingEvent.venue = venue;
@@ -167,13 +203,86 @@ const getSingleEvent = async (req, res) => {
     }
 
     // Check if the event exists
+    var event = await Event.findById(eventId);
+
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    // Check if the user making the request is an admin
+    const userId = req.decoded.id;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // If the user is an admin, fetch users who bought tickets for the event
+    if (user.role === "admin") {
+      console.log("Yes admin here");
+      const tickets = await Ticket.find({ eventId: eventId });
+
+      console.log("tickets: ", tickets);
+      const usersWithTickets = [];
+
+      // Fetch user details for each ticket
+      for (const ticket of tickets) {
+        const user = await User.findById(
+          ticket.userId,
+          "full_name email phone_number profileImage"
+        );
+        if (user) {
+          usersWithTickets.push({
+            userId: user._id,
+            full_name: user.full_name,
+            email: user.email,
+          });
+        }
+      }
+      const updatedEvent = {
+        ...event.toObject(), // Convert Mongoose document to plain JavaScript object
+        usersWithTickets: usersWithTickets,
+      };
+      return res.status(200).json(updatedEvent);
+    }
+
+    return res.status(200).json(event);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+const deleteEventImage = async (req, res) => {
+  try {
+    console.log("Deleting event image");
+    const eventId = req.body.eventId;
+    const imageLinkToDelete = req.body.imageLink;
+
+    // Check if the event exists
     const event = await Event.findById(eventId);
 
     if (!event) {
       return res.status(404).json({ message: "Event not found" });
     }
 
-    res.json(event);
+    // Check if the imageLinkToDelete exists in the event's images array
+    const imageIndex = await event.images.indexOf(imageLinkToDelete);
+
+    if (imageIndex === -1) {
+      return res.status(404).json({ message: "Image not found in the event" });
+    }
+
+    // Remove the image link from the event's images array
+    event.images.splice(imageIndex, 1);
+
+    // Save the updated event to the database
+    const updatedEvent = await event.save();
+
+    res.json({
+      message: "Image deleted successfully",
+      event: updatedEvent,
+      deletedImage: imageLinkToDelete,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -184,4 +293,5 @@ module.exports = {
   updateEvent,
   eventList,
   getSingleEvent,
+  deleteEventImage,
 };

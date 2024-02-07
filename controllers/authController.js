@@ -56,8 +56,15 @@ const login = async (req, res) => {
     );
     console.log(token);
     console.log(user);
-    const { _id, full_name, phone_number, email, role } = user;
-    const newUserObject = { _id, full_name, phone_number, email, role };
+    const { _id, full_name, profileImage, phone_number, email, role } = user;
+    const newUserObject = {
+      _id,
+      full_name,
+      profileImage,
+      phone_number,
+      email,
+      role,
+    };
     return res.status(200).json({
       status: 200,
       message: "Login successful",

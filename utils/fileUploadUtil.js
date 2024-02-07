@@ -49,6 +49,7 @@ const uploadSingleFile = async (file) => {
 
 const uploadMultipleFiles = async (files) => {
   const uploadedFilesInfo = [];
+  console.log(files);
 
   try {
     await Promise.all(
