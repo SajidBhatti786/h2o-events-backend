@@ -77,7 +77,14 @@ const login = async (req, res) => {
 const register = async (req, res) => {
   try {
     console.log("req body:", req.body);
-    let { full_name, phone_number, gender, role, email, password } = req.body;
+    let { full_name, phone_number, role, email, password } = req.body;
+    if (!full_name || !phone_number || !role || !email || !password) {
+      return res.status(400).json({
+        error: "Bad Request",
+        message: "Missing or empty values for required fields.",
+      });
+    }
+
     // Validate phone number using the Abstract Phone Validation API
     const apiKey = "fc1ec9e5bc504c72b44eb84625ba6112";
     const phoneValidationApiUrl = `https://phonevalidation.abstractapi.com/v1/?api_key=${apiKey}&phone=${encodeURIComponent(

@@ -3,7 +3,7 @@ const { uploadSingleFile } = require("../utils/fileUploadUtil");
 const getSingleUser = async (req, res) => {
   try {
     const userId = req.params.userId;
-
+    console.log(userId);
     // Check if the user ID is provided
     if (!userId) {
       return res

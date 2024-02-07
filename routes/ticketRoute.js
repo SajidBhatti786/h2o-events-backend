@@ -8,4 +8,10 @@ router.post(
   authMiddleware.authenticationVerifier,
   ticketController.buyTicket
 );
+router.get(
+  "/:eventId",
+  authMiddleware.isAdminVerifier,
+  ticketController.getUsersWithTicketsForEvent
+);
+
 module.exports = router;

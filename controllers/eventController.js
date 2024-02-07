@@ -12,13 +12,23 @@ const createEvent = async (req, res) => {
     // Extracting non-file fields from the request body
     const { title, description, date, time, venue, totalSeats, ticketPrice } =
       req.body;
-
+    if (
+      !title ||
+      !description ||
+      !date ||
+      !time ||
+      !venue ||
+      !ticketPrice ||
+      !totalSeats
+    ) {
+      return res.status(400).json({
+        status: 400,
+        message: "All the fields are required",
+      });
+    }
     // Extracting images from the request files
     console.log(req.body);
-
-    // Assuming you've configured multer properly
     const images = req.files;
-    console.log(images);
     // // Iterate over the array of image data and save references in the event's images array
     // for (const imageData of images) {
     //   // Assuming imageData is an object containing information about the image
@@ -129,7 +139,7 @@ const eventList = async (req, res) => {
       // If the user is an admin, fetch all events created by that admin
       const adminEvents = await Event.find({ createdBy: userId });
 
-      return res.json({ events: adminEvents });
+      return res.json(adminEvents);
     } else {
       console.log("User");
       // If the user is not an admin, fetch events for which the user has bought tickets
@@ -138,7 +148,7 @@ const eventList = async (req, res) => {
       // Extract events from user tickets
       const userEvents = userTickets.map((ticket) => ticket.eventId);
 
-      return res.json({ events: userEvents });
+      return res.json(userEvents);
     }
   } catch (error) {
     console.error(error);
