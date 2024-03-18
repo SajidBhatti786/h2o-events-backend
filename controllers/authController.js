@@ -19,18 +19,23 @@ const login = async (req, res) => {
 
   // Find the user in the database
   let user = await User.findOne({ email: username }).lean();
-  if (!user) {
-    const apiKey = "fc1ec9e5bc504c72b44eb84625ba6112";
-    const phoneValidationApiUrl = `https://phonevalidation.abstractapi.com/v1/?api_key=${apiKey}&phone=${encodeURIComponent(
-      username.replace(/[\s+]/g, "")
-    )}`;
 
-    const phoneValidationResponse = await axios.get(phoneValidationApiUrl);
-    console.log(phoneValidationResponse.data.format.international);
-    user = await User.findOne({
-      phone_number: phoneValidationResponse.data.format.international,
-    }).lean();
-  }
+  //Code for Mobile phone validation
+
+  // if (!user) {
+  //   const apiKey = "fc1ec9e5bc504c72b44eb84625ba6112";
+  //   const phoneValidationApiUrl = `https://phonevalidation.abstractapi.com/v1/?api_key=${apiKey}&phone=${encodeURIComponent(
+  //     username.replace(/[\s+]/g, "")
+  //   )}`;
+
+  //   const phoneValidationResponse = await axios.get(phoneValidationApiUrl);
+  //   console.log(phoneValidationResponse.data.format.international);
+  //   user = await User.findOne({
+  //     phone_number: phoneValidationResponse.data.format.international,
+  //   }).lean();
+  // }
+
+
   console.log(user);
 
   if (!user) {
@@ -47,6 +52,7 @@ const login = async (req, res) => {
   if (passwordMatch) {
     // Passwords match, send a successful login response
     console.log("passwords match");
+    console.log(jWT_SECRET)
     const token = jwt.sign(
       {
         id: user._id,
@@ -93,19 +99,21 @@ const register = async (req, res) => {
     }
 
     // Validate phone number using the Abstract Phone Validation API
-    const apiKey = "fc1ec9e5bc504c72b44eb84625ba6112";
-    const phoneValidationApiUrl = `https://phonevalidation.abstractapi.com/v1/?api_key=${apiKey}&phone=${encodeURIComponent(
-      phone_number.replace(/[\s+]/g, "")
-    )}`;
+    // const apiKey = "fc1ec9e5bc504c72b44eb84625ba6112";
+    // const phoneValidationApiUrl = `https://phonevalidation.abstractapi.com/v1/?api_key=${apiKey}&phone=${encodeURIComponent(
+    //   phone_number.replace(/[\s+]/g, "")
+    // )}`;
 
-    const phoneValidationResponse = await axios.get(phoneValidationApiUrl);
-    console.log(phoneValidationResponse.data.format.international);
-    if (!phoneValidationResponse.data.valid) {
-      return res.status(400).json({
-        status: 400,
-        message: "Invalid phone number. Must be in Internation format",
-      });
-    }
+    // const phoneValidationResponse = await axios.get(phoneValidationApiUrl);
+    // console.log(phoneValidationResponse.data.format.international);
+    // if (!phoneValidationResponse.data.valid) {
+    //   return res.status(400).json({
+    //     status: 400,
+    //     message: "Invalid phone number. Must be in Internation format",
+    //   });
+    // }
+
+
     // console.log("Uploaded image details:", {
     //   fieldname: my_image.fieldname,
     //   originalname: my_image.originalname,
@@ -116,11 +124,14 @@ const register = async (req, res) => {
 
     //checking if user already exists
     let user = await User.findOne({ email: email });
-    if (!user) {
-      user = await User.findOne({
-        phone_number: phoneValidationResponse.data.format.international,
-      });
-    }
+
+    // uncomment following code when you activate phone validation API
+
+    // if (!user) {
+    //   user = await User.findOne({
+    //     phone_number: phoneValidationResponse.data.format.international,
+    //   });
+    // }
     if (user) {
       return res
         .status(400)
@@ -135,7 +146,8 @@ const register = async (req, res) => {
     let response = await User.create({
       full_name: full_name,
 
-      phone_number: phoneValidationResponse.data.format.international,
+      // phone_number: phoneValidationResponse.data.format.international,
+      phone_number: phone_number,
       role: role.toLowerCase(),
       email: email.toLowerCase(),
       password: password,

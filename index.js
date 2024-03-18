@@ -1,6 +1,5 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const cors = require("cors");
 const path = require("path");
 const { connectToDatabase } = require("./config/database");
 const app = express();
@@ -12,7 +11,14 @@ require("dotenv").config();
 
 const port = process.env.PORT;
 
-app.use(cors());
+const cors=require("cors");
+const corsOptions ={
+   origin:'*', 
+   credentials:true,            //access-control-allow-credentials:true
+   optionSuccessStatus:200,
+}
+
+app.use(cors(corsOptions)) // Use this after the variable declaration
 app.use(express.static(path.join(__dirname, "static")));
 app.use(bodyParser.json());
 
