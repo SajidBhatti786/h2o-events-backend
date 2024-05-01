@@ -162,6 +162,7 @@ const updateEvent = async (req, res) => {
   }
 };
 
+
 const eventList = async (req, res) => {
   try {
     const userId = req.decoded.id;
@@ -191,6 +192,25 @@ const eventList = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+
+const getAllEvents = async (req, res) => {
+  console.log("GEtting all events")
+  try {
+   try{
+    var events = await Event.find(); // Fetch all events from the Event collection
+   }catch(e){
+    console.log("Exception in Query: ",e)
+   }
+    res.status(200).json(events); // Return the events as JSON
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    res.status(500).json({ error: 'Internal Server Error' }); // Return an error response
+  }
+};
+
+
+
 const getSingleEvent = async (req, res) => {
   try {
     const eventId = req.params.eventId;
@@ -294,4 +314,5 @@ module.exports = {
   eventList,
   getSingleEvent,
   deleteEventImage,
+  getAllEvents
 };

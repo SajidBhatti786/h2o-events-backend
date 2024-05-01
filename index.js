@@ -12,13 +12,13 @@ require("dotenv").config();
 const port = process.env.PORT;
 
 const cors=require("cors");
-const corsOptions ={
-   origin:'*', 
-   credentials:true,            //access-control-allow-credentials:true
-   optionSuccessStatus:200,
-}
+// const corsOptions ={
+//    origin:'*', 
+//    credentials:true,            //access-control-allow-credentials:true
+//    optionSuccessStatus:200,
+// }
 
-app.use(cors(corsOptions)) // Use this after the variable declaration
+app.use(cors()) // Use this after the variable declaration
 app.use(express.static(path.join(__dirname, "static")));
 app.use(bodyParser.json());
 
@@ -34,14 +34,15 @@ const startServer = async () => {
     const eventRoutes = require("./routes/eventRoute");
     const ticketRoutes = require("./routes/ticketRoute");
     const userRoutes = require("./routes/userRoute");
+    const stripeRoutes = require("./routes/stripeRoute");
     // Use routes
     app.use("/api/auth", authRoutes);
     app.use("/api/event", eventRoutes);
     app.use("/api/ticket", ticketRoutes);
     app.use("/api/user", userRoutes);
+    app.use("/api/stripe", stripeRoutes);
     // Set CORS for specific routes
-    app.use(cors({ origin: "*" }));
-
+   
     server.listen(port, () => {
       console.log("Server listening on port: " + port);
     });

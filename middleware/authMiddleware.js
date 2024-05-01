@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const jWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET;
 const User = require("../models/userModel");
 
 const authenticationVerifier = (req, res, next) => {
@@ -8,8 +8,9 @@ const authenticationVerifier = (req, res, next) => {
   if (!token) {
     return res.status(403).json({ message: "No token provided" });
   }
-
-  jwt.verify(token, jWT_SECRET, (err, decoded) => {
+console.log("verifying token")
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    console.log("verifying token")
     if (err) {
       return res.status(401).json({ message: "Failed to authenticate token" });
     }
@@ -20,12 +21,14 @@ const authenticationVerifier = (req, res, next) => {
 
 const isAdminVerifier = async (req, res, next) => {
   const token = req.headers.authorization;
+  
 
   try {
     // Decode the token to get user ID
-    const decoded = jwt.verify(token, jWT_SECRET);
-
-    // Fetch the user from the database based on the 'id'
+    console.log("verifying token")
+    // console.log(req.body)
+    const decoded = jwt.verify(token, JWT_SECRET);
+    console.log("verifying token")    // Fetch the user from the database based on the 'id'
     const user = await User.findById(decoded.id);
 
     if (!user) {
