@@ -71,10 +71,10 @@ const checkout =  async (req, res) => {
      
     // },
     transfer_data: {
-        destination: 'acct_1PA9YDR2bWiQvRfw',
+        destination: sellerId,
       },
-      application_fee_amount: 14,
-      on_behalf_of: 'acct_1PA9YDR2bWiQvRfw',
+      application_fee_amount: 0.1 * event.ticketPrice,
+      on_behalf_of: sellerId,
     
       automatic_payment_methods: {
         enabled: true,
@@ -383,6 +383,8 @@ const createSession = async (req, res) => {
 
 }
 const ConectectedAccountExists = async (req, res) => {
+  const userId = req.decoded.id;
+console.log("userId: ",userId)
   const stripeDetails = await Stripe.findOne({ userId: userId})
   console.log(stripeDetails)
   if (!stripeDetails) {
