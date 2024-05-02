@@ -12,13 +12,24 @@ require("dotenv").config();
 const port = process.env.PORT;
 
 const cors=require("cors");
-// const corsOptions ={
-//    origin:'*', 
-//    credentials:true,            //access-control-allow-credentials:true
-//    optionSuccessStatus:200,
-// }
+const corsOptions = {
+  origin: "*", // Allow requests from any origin
+  methods: ["GET", "POST", "PUT", "DELETE"], // Allow these HTTP methods
+  allowedHeaders: [
+    "Origin",
+    "X-Requested-With",
+    "Content-Type",
+    "Accept",
+    "Authorization",
+  ], // Allow these headers
+  exposedHeaders: ["Content-Disposition"], // Allow these headers to be exposed
+  credentials: true, // Allow credentials such as cookies, authorization headers, etc.
+  maxAge: 3600, // Cache preflight requests for 1 hour
+  preflightContinue: false, // Disable preflight request handling in route handlers
+  optionsSuccessStatus: 200, // Return status code 200 for successful preflight requests
+};
 
-app.use(cors()) // Use this after the variable declaration
+app.use(cors(corsOptions));
 app.use(express.static(path.join(__dirname, "static")));
 app.use(bodyParser.json());
 
