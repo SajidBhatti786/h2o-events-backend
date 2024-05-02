@@ -30,6 +30,10 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.use((req, res, next) => {
+  res.header({"Access-Control-Allow-Origin": "*"});
+  next();
+}) 
 app.use(express.static(path.join(__dirname, "static")));
 app.use(bodyParser.json());
 
