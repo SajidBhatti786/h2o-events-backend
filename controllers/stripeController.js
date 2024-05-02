@@ -1,6 +1,105 @@
 const { connect } = require('mongoose');
 const User = require("../models/userModel");
 const Stripe = require("../models/stripeModel");
+const Event = require("../models/eventModel")
+const Ticket = require("../models/ticketModel")
+//
+const checkout =  async (req, res) => {
+  console.log("checking out")
+  const eventId = req.params.eventId;
+  console.log("eventId: ",eventId);
+  try{
+    const event = await Event.findById(eventId).exec();
+    console.log("event: ",event);
+    if(!event){
+      return res.status(400).json({message: "Event not found"})
+      
+    }
+     // Extracting user ID from the decoded token
+     const userId = req.decoded.id;
+     console.log("seller Id: ",event.createdBy)
+
+    const sellerId = event.createdBy
+
+     const connectedAccount = await Stripe.find({userId: sellerId}).exec()
+     console.log("connec account: ",connectedAccount)
+     if(!connectedAccount){
+      return res.status(400).json({message: "Seller has no connected account"})
+     }
+
+     // Extracting event information from the request body
+     
+     // Check if the event exists
+    
+ 
+     if (!event) {
+       return res.status(404).json({ message: "Event not found" });
+     }
+ 
+     // Check if the event has available seats
+     // Add additional validation logic as needed
+     if (event.availableSeats <= 0) {
+       return res
+         .status(400)
+         .json({ message: "No available seats for the event" });
+     }
+     // Check if the user has already purchased a ticket for the event
+     const existingTicket = await Ticket.findOne({ userId, eventId });
+     
+     if (existingTicket) {
+      console.log("already bought ticket")
+       return res.status(400).json({
+         message: "You has already purchased a ticket for this event",
+       });
+     }
+     console.log("createing payment intent")
+    // Create a PaymentIntent with the order amount and currency
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: event.ticketPrice * 100,
+    currency: "usd",
+    description: event.title,
+    // shipping: {
+    //   name: 'Jenny Rosen',
+    //   address: {
+    //     line1: '510 Townsend St',
+    //     postal_code: '98140',
+    //     city: 'San Francisco',
+    //     state: 'CA',
+    //     country: 'US',
+    //   },
+     
+    // },
+    transfer_data: {
+        destination: 'acct_1PA9YDR2bWiQvRfw',
+      },
+      application_fee_amount: 14,
+      on_behalf_of: 'acct_1PA9YDR2bWiQvRfw',
+    
+      automatic_payment_methods: {
+        enabled: true,
+      },
+  });
+  console.log("payment intent id: ",paymentIntent)
+  
+
+  // Update the available seats for the event
+  await Event.findByIdAndUpdate(eventId, {
+    $inc: { availableSeats: -1 }, // Decrease available seats by 1
+  });
+  console.log("paymentIntent")
+
+  res.send({
+    paymentIntent: paymentIntent,
+    clientSecret: paymentIntent.client_secret,
+
+  });
+  }catch(e){
+    console.log("server error: ",e)
+    return res.status(500).json({message: "An server error occured! Please try again!"})
+  }
+  
+}
 
 //connect account
 const connectAccount =  async (req, res) => {
@@ -284,7 +383,6 @@ const createSession = async (req, res) => {
 
 }
 const ConectectedAccountExists = async (req, res) => {
-  const userId = req.decoded.id;
   const stripeDetails = await Stripe.findOne({ userId: userId})
   console.log(stripeDetails)
   if (!stripeDetails) {
@@ -299,6 +397,7 @@ module.exports = {
     ViewBalance,
     verifyAccount,
     createSession,
-    ConectectedAccountExists
+    ConectectedAccountExists,
+    checkout
   };
   

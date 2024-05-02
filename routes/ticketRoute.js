@@ -4,7 +4,7 @@ const bodyParser = require("body-parser");
 const authMiddleware = require("../middleware/authMiddleware");
 const ticketController = require("../controllers/ticketController");
 router.post(
-  "/buy-ticket",
+  "/buy-ticket/:eventId",
   authMiddleware.authenticationVerifier,
   ticketController.buyTicket
 );

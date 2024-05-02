@@ -8,7 +8,7 @@ const buyTicket = async (req, res) => {
     const userId = req.decoded.id;
 
     // Extracting event information from the request body
-    const { eventId } = req.body;
+    const { eventId } = req.params.eventId;
 
     // Check if the event exists
     const event = await Event.findById(eventId);

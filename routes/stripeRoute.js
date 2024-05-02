@@ -35,4 +35,9 @@ router.get('/connected-account-exists',
 authMiddleware.isAdminVerifier,
 stripeController.ConectectedAccountExists
 )
+
+router.post('/checkout/:eventId',
+authMiddleware.authenticationVerifier,
+stripeController.checkout
+)
 module.exports = router;
