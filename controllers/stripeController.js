@@ -73,7 +73,7 @@ const checkout =  async (req, res) => {
     transfer_data: {
         destination: sellerId,
       },
-      application_fee_amount: 0.1 * event.ticketPrice,
+     
       on_behalf_of: sellerId,
     
       automatic_payment_methods: {
