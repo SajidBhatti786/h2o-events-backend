@@ -15,7 +15,7 @@ router.get('/get-account',
 authMiddleware.isAdminVerifier,
 stripeController.getAccountInfo
 )
-router.post('/add-external-account',
+router.post('/connect-bank-account',
 authMiddleware.isAdminVerifier,
 stripeController.addExternalAccount
 )

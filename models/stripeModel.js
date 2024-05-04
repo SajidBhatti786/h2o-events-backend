@@ -11,7 +11,7 @@ const stripeAccountSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User', // Reference to the user model if applicable
   },
-  connectedAccountId:{
+  connectedBankAccountId:{
     type: String,
     
    

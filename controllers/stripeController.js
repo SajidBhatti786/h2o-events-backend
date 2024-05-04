@@ -3,6 +3,92 @@ const User = require("../models/userModel");
 const Stripe = require("../models/stripeModel");
 const Event = require("../models/eventModel")
 const Ticket = require("../models/ticketModel")
+
+//creating session
+
+const createSession = async (req, res) => {
+  console.log("creating session")
+
+  console.log("creating account session!!")
+  const userId = req.decoded.id;
+    const stripeDetails = await Stripe.findOne({userId: userId})
+    console.log(stripeDetails)
+
+    if (!stripeDetails) {
+      return res.status(403).json({ message: "User not found" });
+    }
+    
+  const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+  try {
+    const accountSession = await stripe.accountSessions.create({
+      account: stripeDetails.stripeAccountId,
+      components: {
+        payments: {
+          enabled: true,
+          features: {
+            refund_management: true,
+            dispute_management: true,
+            capture_payments: true,
+          }
+        },
+        account_onboarding: {
+          enabled: true,
+          features: {
+            external_account_collection: false,
+
+            
+
+          },
+          
+        },
+        account_management: {
+          enabled: true,
+          features: {
+            external_account_collection: false,
+          },
+        },
+      
+        payments: {
+          enabled: true,
+          features: {
+            refund_management: true,
+            dispute_management: true,
+            capture_payments: true,
+            destination_on_behalf_of_charge_management: true,
+          },
+        },
+        payment_details: {
+          enabled: true,
+          features: {
+            refund_management: true,
+            dispute_management: true,
+            capture_payments: true,
+            destination_on_behalf_of_charge_management: true,
+          },
+        },
+        balances: {
+          enabled: true,
+          features: {
+            instant_payouts: true,
+            standard_payouts: true,
+            edit_payout_schedule: true,
+          },
+        },
+      }
+    });
+    console.log("account session: ",accountSession)
+
+    res.json({
+      client_secret: accountSession.client_secret,
+    });
+  } catch (error) {
+    console.error('An error occurred when calling the Stripe API to create an account session', error);
+    res.status(500);
+    res.send({error: error.message});
+  }
+}
+
+
 //
 const checkout =  async (req, res) => {
   console.log("checking out")
@@ -55,11 +141,13 @@ const checkout =  async (req, res) => {
      console.log("createing payment intent")
     // Create a PaymentIntent with the order amount and currency
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    console.log("connected account: ",connectedAccount[0].stripeAccountId)
   const paymentIntent = await stripe.paymentIntents.create({
     amount: event.ticketPrice * 100,
     currency: "usd",
     description: event.title,
     // shipping: {
+
     //   name: 'Jenny Rosen',
     //   address: {
     //     line1: '510 Townsend St',
@@ -71,10 +159,12 @@ const checkout =  async (req, res) => {
      
     // },
     transfer_data: {
-        destination: sellerId,
+        destination: "acct_1PC0iNQfQ2q8Oyb7"
+  //        connectedAccount[0].stripeAccountId,
       },
      
-      on_behalf_of: sellerId,
+      on_behalf_of: "acct_1PC0iNQfQ2q8Oyb7",
+//      connectedAccount[0].stripeAccountId,
     
       automatic_payment_methods: {
         enabled: true,
@@ -83,11 +173,11 @@ const checkout =  async (req, res) => {
   console.log("payment intent id: ",paymentIntent)
   
 
-  // Update the available seats for the event
-  await Event.findByIdAndUpdate(eventId, {
-    $inc: { availableSeats: -1 }, // Decrease available seats by 1
-  });
-  console.log("paymentIntent")
+  // // Update the available seats for the event
+  // await Event.findByIdAndUpdate(eventId, {
+  //   $inc: { availableSeats: -1 }, // Decrease available seats by 1
+  // });
+  console.log("paymentIntent: ",paymentIntent)
 
   res.send({
     paymentIntent: paymentIntent,
@@ -105,10 +195,11 @@ const checkout =  async (req, res) => {
 const connectAccount =  async (req, res) => {
     const userId = req.decoded.id;
     console.log(userId)
+    
     const existingAccount = await Stripe.findOne({ userId: userId});
     console.log("existing acount: ",existingAccount)
     if(existingAccount){
-        return res.status(400).json({message: "Account already connected"})
+        return res.status(400).json({status: 400, message: "Account already connected"})
     }
    
     try{
@@ -180,13 +271,13 @@ try{
       // Save the document to the database
       const savedStripeAccount = await stripeAccount.save();
       console.log(savedStripeAccount)
-      return res.status(200).send({message: "Account connected successfully"})
+      return res.status(200).send({status: 200, message: "Account connected successfully"})
 }catch(e){
-    console.log(e)
+    console.log("Exception: ",e)
     const deleted = await stripe.accounts.del(account.id);
     console.log(deleted);
 
-    return res.status(500).send({message: "Error connecting account"})
+    return res.status(500).send({status: 500, message: "Error connecting account"})
     
 }
 
@@ -195,7 +286,8 @@ try{
 
 
     }catch(e){
-        return res.status(500).send({message: "Error connecting account"})
+      console.log("Exception: ",e)
+        return res.status(500).send({status: 500,message: e.message})
     }
     
 
@@ -228,21 +320,44 @@ const getAccountInfo = async(req,res)=>{
 
 const addExternalAccount =  async (req, res) => {
     try {
-      const {  externalAccount } = req.body;
-      // console.log("accountId: ",accountId)
-      // console.log("externalAccount: ",externalAccount)
-      // accountId: The ID of the Stripe account to which the external account will be added
-      // externalAccount: Details of the external account (e.g., bank account)
-  
-      // Create the external account
       const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-  const externalAccountResponse = await stripe.accounts.createExternalAccount(
-    'acct_1PAWj8R8n80pAj9e',  //Chai Grill
-    {
-      external_account: 'tok_visa_debit_us_transferSuccess',
-    }
-  );
-      res.status(200).json({ success: true, externalAccountResponse });
+    const userId = req.decoded.id;
+       // Extract bank account details from request body
+    const { bankName,bankAccountNumber, routingNumber } = req.body;
+    console.log(bankName,bankAccountNumber.length, routingNumber.length)
+    const stripeDetails = await Stripe.findOne({userId: userId})
+
+
+    // Create external account object to add to Stripe account
+    const externalAccount = await stripe.accounts.createExternalAccount(
+      stripeDetails.stripeAccountId, // Assuming you have stored the connected Stripe account ID in the user object
+      {
+        external_account: {
+          object: "bank_account",
+          account_number: bankAccountNumber,
+          routing_number: routingNumber,
+          currency: "usd", // Change currency as needed
+          account_holder_name: bankName,
+          account_holder_type: "individual",
+          country: "US", // Change country as needed
+          default_for_currency: true,
+        
+
+        },
+      }
+    );
+
+    console.log(externalAccount)
+    // Save the document to the database
+    const updatedStripeAccount = await Stripe.findOneAndUpdate(
+      { userId: userId },
+      { $set: { connectedBankAccountId: externalAccount.id } },
+      { new: true }
+    );
+
+    console.log(updatedStripeAccount);
+    // Return success response
+    res.status(200).json({ success: true, externalAccount });
     } catch (error) {
       console.error('Error adding external account:', error);
       res.status(500).json({ success: false, error: error.message });
@@ -278,88 +393,6 @@ return res.status(200).send({accountLink: accountLink.url})
 }
 
 
-//creating session
-
-const createSession = async (req, res) => {
-
-  console.log("creating account session!!")
-  const userId = req.decoded.id;
-    const stripeDetails = await Stripe.findOne({userId: userId})
-    console.log(stripeDetails)
-
-    if (!stripeDetails) {
-      return res.status(403).json({ message: "User not found" });
-    }
-    
-  const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-  try {
-    const accountSession = await stripe.accountSessions.create({
-      account: stripeDetails.stripeAccountId,
-      components: {
-        payments: {
-          enabled: true,
-          features: {
-            refund_management: true,
-            dispute_management: true,
-            capture_payments: true,
-          }
-        },
-        account_onboarding: {
-          enabled: true,
-          features: {
-            external_account_collection: true,
-
-            
-
-          },
-          
-        },
-        account_management: {
-          enabled: true,
-          features: {
-            external_account_collection: true,
-          },
-        },
-      
-        payments: {
-          enabled: true,
-          features: {
-            refund_management: true,
-            dispute_management: true,
-            capture_payments: true,
-            destination_on_behalf_of_charge_management: true,
-          },
-        },
-        payment_details: {
-          enabled: true,
-          features: {
-            refund_management: true,
-            dispute_management: true,
-            capture_payments: true,
-            destination_on_behalf_of_charge_management: true,
-          },
-        },
-        balances: {
-          enabled: true,
-          features: {
-            instant_payouts: true,
-            standard_payouts: true,
-            edit_payout_schedule: true,
-          },
-        },
-      }
-    });
-    console.log("account session: ",accountSession)
-
-    res.json({
-      client_secret: accountSession.client_secret,
-    });
-  } catch (error) {
-    console.error('An error occurred when calling the Stripe API to create an account session', error);
-    res.status(500);
-    res.send({error: error.message});
-  }
-}
 
 
   //View Balance
