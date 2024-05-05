@@ -8,10 +8,11 @@ const buyTicket = async (req, res) => {
     const userId = req.decoded.id;
 
     // Extracting event information from the request body
-    const { eventId } = req.params.eventId;
-
+    const { eventId } = req.params;
+    console.log(eventId);
     // Check if the event exists
-    const event = await Event.findById(eventId);
+    const event = await Event.findById(eventId).exec();
+    console.log(event)
 
     if (!event) {
       return res.status(404).json({ message: "Event not found" });
