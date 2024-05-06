@@ -158,13 +158,15 @@ const checkout =  async (req, res) => {
     //   },
      
     // },
+    
+    receipt_email: "sbhattti1212@gmail.com",
+
     transfer_data: {
-        destination: "acct_1PC0iNQfQ2q8Oyb7"
-  //        connectedAccount[0].stripeAccountId,
+        destination: connectedAccount[0].stripeAccountId,
       },
      
-      on_behalf_of: "acct_1PC0iNQfQ2q8Oyb7",
-//      connectedAccount[0].stripeAccountId,
+      on_behalf_of: connectedAccount[0].stripeAccountId,
+     
     
       automatic_payment_methods: {
         enabled: true,
