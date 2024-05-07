@@ -207,11 +207,10 @@ const connectAccount =  async (req, res) => {
     try{
         const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
   console.log("connecting account!!")
-  const { country, email, businessType, businessName, mcc, url, firstName, lastName, city, line1, postalCode, state, dobDay, dobMonth, dobYear, phone, ssnLast4, statementDescriptor } = req.body;
-console.log(country, email, businessType, businessName, mcc, url, firstName, lastName, city, line1, postalCode, state, dobDay, dobMonth, dobYear, phone, ssnLast4, statementDescriptor)
+  const {  email, businessType, businessName,  firstName, lastName, city, line1, postalCode, state, dobDay, dobMonth, dobYear, phone, ssnLast4, statementDescriptor } = req.body;
 const account = await stripe.accounts.create({
   type: 'custom',
-  country: country,
+  country: 'US',
   email: email,
   type: 'custom',
 business_type: businessType,
@@ -226,7 +225,7 @@ business_type: businessType,
   },
   business_profile: {
     name: businessName,
-    mcc:  mcc,       //"5734", // Demo MCC
+    mcc:  5817,       //"5734", // Demo MCC
     url: "https://accessible.stripe.com" // Demo URL
   },
   individual: {
@@ -400,6 +399,9 @@ return res.status(200).send({accountLink: accountLink.url})
   //View Balance
   const ViewBalance = async(req,res)=>{
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const userId = req.decoded.id;
+    console.log("userId: ",userId)
+      const stripeDetails = await Stripe.findOne({ userId: userId})
 
     try{
         const balance = await stripe.balance.retrieve(
@@ -407,7 +409,7 @@ return res.status(200).send({accountLink: accountLink.url})
               expand: ['instant_available.net_available'],
             },
             {
-              stripeAccount: 'acct_1PA9YDR2bWiQvRfw',   //Chai Grill
+              stripeAccount: stripeDetails.stripeAccountId,   //Chai Grill
             }
           );
         res.send({balance: balance})
