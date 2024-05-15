@@ -74,6 +74,12 @@ const createSession = async (req, res) => {
             edit_payout_schedule: true,
           },
         },
+        notification_banner: {
+          enabled: true,
+          features: {
+            external_account_collection: false,
+          },
+        },
       }
     });
     console.log("account session: ",accountSession)
@@ -104,7 +110,7 @@ const checkout =  async (req, res) => {
      // Extracting user ID from the decoded token
      const userId = req.decoded.id;
      console.log("seller Id: ",event.createdBy)
-
+    const user = await User.findById(userId).exec();
     const sellerId = event.createdBy
 
      const connectedAccount = await Stripe.find({userId: sellerId}).exec()
@@ -159,7 +165,7 @@ const checkout =  async (req, res) => {
      
     // },
     
-    receipt_email: "sbhattti1212@gmail.com",
+    receipt_email: user.email,
 
     transfer_data: {
         destination: connectedAccount[0].stripeAccountId,
@@ -195,106 +201,105 @@ const checkout =  async (req, res) => {
 
 //connect account
 const connectAccount =  async (req, res) => {
-    const userId = req.decoded.id;
-    console.log(userId)
-    
-    const existingAccount = await Stripe.findOne({ userId: userId});
-    console.log("existing acount: ",existingAccount)
-    if(existingAccount){
-        return res.status(400).json({status: 400, message: "Account already connected"})
-    }
-   
-    try{
-        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-  console.log("connecting account!!")
-  const {  email, businessType, businessName,  firstName, lastName, city, line1, postalCode, state, dobDay, dobMonth, dobYear, phone, ssnLast4, statementDescriptor } = req.body;
-const account = await stripe.accounts.create({
-  type: 'custom',
-  country: 'US',
-  email: email,
-  type: 'custom',
-business_type: businessType,
-     
-  capabilities: {
-    card_payments: {
-      requested: true,
-    },
-    transfers: {
-      requested: true,
-    },
-  },
-  business_profile: {
-    name: businessName,
-    mcc:  5817,       //"5734", // Demo MCC
-    url: "https://accessible.stripe.com" // Demo URL
-  },
-  individual: {
-    address: {
-      city:   city,   //"Miami",
-      line1:  line1,         // "address_full_match",
-      postal_code:  postalCode ,         //"33101",
-      state:  state      //"Florida"
-    },
-    dob: {
-      day: dobDay,  //01
-      month: dobMonth, //01
-      year:  dobYear   //1902
-    },
-    email: email,
-    first_name: firstName,
-    last_name: lastName,
-    phone:   phone,     //"+1 (754) 971-9348",
-    ssn_last_4: ssnLast4
-  },
-  settings: {
-    payments: {
-      statement_descriptor: statementDescriptor  // Demo statement descriptor
-    }
-  },
-  tos_acceptance: {
-    date: Math.floor(Date.now() / 1000), // Current timestamp
-    ip: "127.0.0.1" // Demo IP address
-  }
-
+  const userId = req.decoded.id;
+  console.log(userId)
   
+  const existingAccount = await Stripe.findOne({ userId: userId});
+  console.log("existing acount: ",existingAccount)
+  if(existingAccount){
+      return res.status(400).json({status: 400, message: "Account already connected"})
+  }
+ 
+  try{
+      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+console.log("connecting account!!")
+const {  email, businessType, businessName,  firstName, lastName, city, line1, postalCode, state, dobDay, dobMonth, dobYear, phone, ssnLast4, statementDescriptor } = req.body;
+const account = await stripe.accounts.create({
+type: 'custom',
+country: 'US',
+email: email,
+type: 'custom',
+business_type: businessType,
+   
+capabilities: {
+  card_payments: {
+    requested: true,
+  },
+  transfers: {
+    requested: true,
+  },
+},
+business_profile: {
+  name: businessName,
+  mcc:  5817,       //"5734", // Demo MCC
+  url: "https://accessible.stripe.com" // Demo URL
+},
+individual: {
+  address: {
+    city:   city,   //"Miami",
+    line1:  line1,         // "address_full_match",
+    postal_code:  postalCode ,         //"33101",
+    state:  state      //"Florida"
+  },
+  dob: {
+    day: dobDay,  //01
+    month: dobMonth, //01
+    year:  dobYear   //1902
+  },
+  email: email,
+  first_name: firstName,
+  last_name: lastName,
+  phone:   phone,     //"+1 (754) 971-9348",
+  ssn_last_4: ssnLast4
+},
+settings: {
+  payments: {
+    statement_descriptor: statementDescriptor  // Demo statement descriptor
+  }
+},
+tos_acceptance: {
+  date: Math.floor(Date.now() / 1000), // Current timestamp
+  ip: "127.0.0.1" // Demo IP address
+}
+
+
 })
 // console.log(account)
 console.log(account.id)
 try{
-    console.log("accoundt Id: ",account.id)
-    console.log("userId: ",userId)
-    const stripeAccount = new Stripe({
-        userId: userId,
-        stripeAccountId: account.id, // Use account.id instead of connectAccount.id
-    });
+  console.log("accoundt Id: ",account.id)
+  console.log("userId: ",userId)
+  const stripeAccount = new Stripe({
+      userId: userId,
+      stripeAccountId: account.id, // Use account.id instead of connectAccount.id
+  });
 
-    
-      // Save the document to the database
-      const savedStripeAccount = await stripeAccount.save();
-      console.log(savedStripeAccount)
-      return res.status(200).send({status: 200, message: "Account connected successfully"})
+  
+    // Save the document to the database
+    const savedStripeAccount = await stripeAccount.save();
+    console.log(savedStripeAccount)
+    return res.status(200).send({status: 200, message: "Account connected successfully"})
 }catch(e){
+  console.log("Exception: ",e)
+  const deleted = await stripe.accounts.del(account.id);
+  console.log(deleted);
+
+  return res.status(500).send({status: 500, message: "Error connecting account"})
+  
+}
+
+
+
+
+
+  }catch(e){
     console.log("Exception: ",e)
-    const deleted = await stripe.accounts.del(account.id);
-    console.log(deleted);
-
-    return res.status(500).send({status: 500, message: "Error connecting account"})
-    
-}
-
-
-
-
-
-    }catch(e){
-      console.log("Exception: ",e)
-        return res.status(500).send({status: 500,message: e.message})
-    }
-    
+      return res.status(500).send({status: 500,message: e.message})
+  }
+  
 
 
 }
-
 
 //get account
 const getAccountInfo = async(req,res)=>{

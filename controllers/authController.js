@@ -17,8 +17,8 @@ const login = async (req, res) => {
     });
   }
 
-  // Find the user in the database
-  let user = await User.findOne({ email: username }).lean();
+  // Find the user in the database    //email.toLowerCase(),
+  let user = await User.findOne({ email: username.toLowerCase() }).lean();
 
   //Code for Mobile phone validation
 
