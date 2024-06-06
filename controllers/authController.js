@@ -3,7 +3,10 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
 const jWT_SECRET = process.env.JWT_SECRET;
-
+const OTP = require("../models/OTPModel")
+const { sendEmailWithOTP } = require("../utils/mailTransporter");
+const { generateOTP } = require("../utils/otpGenerate");
+const OTPService = require("../services/OTPService");
 // Login API
 const login = async (req, res) => {
   // Login logic
@@ -170,7 +173,159 @@ const register = async (req, res) => {
   }
 };
 
+
+/**
+ * Get email from user for password reset and send OTP to the email
+ * @param {*} req 
+ * @param {*} res 
+ */
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  console.log("Response Body: ", req.body);
+
+  if (!email) {
+      return res.status(400).send("Email address is required.");
+  }
+
+  try {
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res
+        .status(400)
+        .json({ status: 400, message: "User not found" });
+      }
+
+      const generatedOTP = generateOTP();
+
+      // send OTP to the user's email
+      const info = await sendEmailWithOTP("Support H2O Events", email, "Password Reset OTP", `Your OTP is ${generatedOTP}`, `<p>Your OTP is <b>${generatedOTP}</b></p>`);
+      console.log("INFOOOOOOOO: ",info);
+
+      // create OTP record in the database
+      const otpData = {
+          email: email,
+          otp: generatedOTP,
+          isUsed: false,
+          expiresAt: new Date(Date.now() + 600000), // 10 minutes from now
+      };
+
+      const otpRecord = await OTPService.createOTP(otpData)
+      console.log("OTP Record:", otpRecord);
+
+      return res.status(200).send("OTP has been sent to your email. Please check your inbox to proceed.");
+  } catch (error) {
+      console.error("Error in forgotPassword:", error);
+      res.status(500).send("An error occurred while processing your request.");
+  }
+};
+
+/**
+* Verify OTP sent to user's email
+* @param {*} req 
+* @param {*} res 
+* @returns 
+*/
+const verifyOTP = async (req, res) => {
+  console.log("Verifying OTP sent to user");
+  const { email, otp } = req.body;
+  
+
+  if (!email || !otp) {
+      return res.status(400).send("Email and OTP are required.");
+  }
+
+  try {
+    const otpRecord = await OTPService.getActiveOTPByEmail(email);
+
+      if (!otpRecord) {
+          return res.status(404).send("OTP not found or has expired.");
+      }
+
+      console.log("OTP is : ", otp);
+
+      if (otpRecord.otp !== otp) {
+          return res.status(401).send("Invalid OTP.");
+      }
+
+      await OTPService.invalidateOTP(otpRecord._id);
+
+      return res.status(200).send("OTP verified successfully.");
+  } catch (error) {
+      console.log("Error in verifyOTP:", error);
+      res.status(500).send("An error occurred while verifying the OTP.");
+  }
+};
+
+/**
+* Reset user password
+* @param {*} req 
+* @param {*} res 
+* @returns 
+*/
+const resetPassword = async (req, res) => {
+  const { email, username, password } = req.body;
+
+  if (!email && !username) {
+      return res.status(400).send("Email or username is required");
+  }
+
+  if (!password) {
+      return res.status(400).send("Password is required");
+  }
+
+  try {
+      const hashPassword = await bcrypt.hash(password, 10);
+      const query = username ? { username } : { email };
+
+      const user = await User.findOne(query);
+
+      if (!user) {
+          return res.status(404).send("User not found");
+      }
+
+      user.password = hashPassword;
+      await user.save();
+
+      // const tokens = jwtTokens(user); // assuming jwtTokens is a function that generates tokens
+
+      user.password = undefined;
+
+      res.status(200).send({
+          // tokens: tokens,
+          // user: user,
+          message: "Password reset successful"
+      });
+  } catch (err) {
+      console.error("Error in resetPassword:", err);
+      res.status(500).send("An error occurred while processing your request.");
+  }
+};
+
+/**
+* Logout user by clearing the cookies
+* @param {*} req 
+* @param {*} res 
+*/
+const logout = async (req, res) => {
+  try {
+      res.clearCookie("access_token");
+      res.clearCookie("refresh_token");
+      res.clearCookie("user");
+      res.status(200).send("User has logged out successfully.");
+  } catch (err) {
+      console.error("Error in logout:", err);
+      res.status(500).send("An error occurred while logging out.");
+  }
+};
+
+
+
 module.exports = {
   login,
   register,
+  forgotPassword,
+  verifyOTP,
+  resetPassword,
+  logout,
 };
