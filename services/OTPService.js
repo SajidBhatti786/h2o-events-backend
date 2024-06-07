@@ -42,7 +42,7 @@ const getActiveOTPByEmail = async (email) => {
             email: email,
             expiresAt: { $gt: new Date() }, // checks if the OTP is not expired
             isUsed: false // checks if the OTP has not been used
-        });
+        }).sort({ createdAt: -1 }); // sorts by creation time in descending order
     } catch (error) {
         console.error("Error fetching OTP:", error);
         throw new Error("Failed to fetch OTP.");
