@@ -29,11 +29,30 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendMail = async (options) => {
+  const htmlMessage = `
+  <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="background-color: #f7f7f7; padding: 20px; border-radius: 8px; max-width: 600px; margin: 0 auto;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <img src="https://h2o-ent.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Flogo.c8bca4f1.png&w=640&q=75" alt="H2OEvents Logo" style="max-width: 150px;">
+        <div style="color: black; font-size: 24px; margin-top: 10px;">H2O Events</div>
+      </div>
+      <h1 style="background-color: #000000; color: white; padding: 10px; border-radius: 8px;">Confirm Your Account</h1>
+      <p style="font-size: 16px;">Hello ${options.full_name},</p>
+      <p style="font-size: 16px;">We are excited to have you with us. Please click the button below to activate your account:</p>
+      <p style="text-align: center; margin-top: 20px;">
+        <a href="${options.activationUrl}" style="display: inline-block; padding: 10px 20px; background-color: #000000; color: white; text-decoration: none; border-radius: 8px;">Activate Your Account</a>
+      </p>
+      <p style="font-size: 16px; margin-top: 20px;">If you did not sign up for an account, please disregard this email.</p>
+      <p style="font-size: 16px;">Best regards,<br>Support Team<br>H2O Events</p>
+    </div>
+  </div>
+`;
+
   const mailOptions = {
     from: `"Support H2O Events" <${process.env.USER_EMAIL}>`,
     to: options.email,
     subject: options.subject,
-    text: options.message,
+    html: htmlMessage,
   };
 
   await transporter.sendMail(mailOptions);
@@ -193,7 +212,8 @@ const register = async (req, res) => {
       await sendMail({
         email: email,
         subject: "Confirm your account",
-        message: `Hello ${full_name}, please click on the link to activate your account: ${activationUrl}`,
+        full_name: full_name,
+        activationUrl: activationUrl,
       });
       res.status(201).json({
         success: true,
@@ -320,8 +340,14 @@ const forgotPassword = async (req, res) => {
       const generatedOTP = generateOTP();
 
       // send OTP to the user's email
-      const info = await sendEmailWithOTP("Support H2O Events", email, "Password Reset OTP", `Your OTP is ${generatedOTP}`, `<p>Your OTP is <b>${generatedOTP}</b></p>`);
-      console.log("INFOOOOOOOO: ",info);
+      const info = await sendEmailWithOTP(
+        "Support H2O Events",
+        email,
+        generatedOTP,
+        user.full_name
+
+      );
+            console.log("INFOOOOOOOO: ",info);
 
       // create OTP record in the database
       const otpData = {
@@ -364,6 +390,7 @@ const verifyOTP = async (req, res) => {
       }
 
       console.log("OTP is : ", otp);
+      console.log("sent OTP: ",otpRecord)
 
       if (otpRecord.otp !== otp) {
           return res.status(401).send("Invalid OTP.");
