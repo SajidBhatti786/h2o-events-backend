@@ -7,6 +7,39 @@ const OTP = require("../models/OTPModel")
 const { sendEmailWithOTP } = require("../utils/mailTransporter");
 const { generateOTP } = require("../utils/otpGenerate");
 const OTPService = require("../services/OTPService");
+const nodemailer = require('nodemailer');
+
+const { google } = require('googleapis');
+const oAuth2Client = new google.auth.OAuth2(
+  process.env.CLIENT_ID,
+  process.env.CLIENT_SECRET,
+  process.env.REDIRECT_URI
+);
+oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    type: 'OAuth2',
+    user: process.env.USER_EMAIL,
+    clientId: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    refreshToken: process.env.REFRESH_TOKEN,
+  },
+});
+
+const sendMail = async (options) => {
+  const mailOptions = {
+    from: `"Support H2O Events" <${process.env.USER_EMAIL}>`,
+    to: options.email,
+    subject: options.subject,
+    text: options.message,
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
+
 // Login API
 const login = async (req, res) => {
   // Login logic
@@ -141,22 +174,51 @@ const register = async (req, res) => {
         .json({ status: 400, message: "User already exists" });
     }
 
+    //gmail verification
+    const activationToken = createActivationToken({
+      full_name,
+      phone_number,
+      role,
+      email,
+      password
+    });
+
+    const activationUrl = `${process.env.SITE_URL}/activation/${activationToken}`;
+
+    
+    
+
+    // Send activation email
+    try {
+      await sendMail({
+        email: email,
+        subject: "Activate your account",
+        message: `Hello ${full_name}, please click on the link to activate your account: ${activationUrl}`,
+      });
+      res.status(201).json({
+        success: true,
+        message: `Please check your email: ${email} to activate your account!`,
+      });
+    } catch (error) {
+      console.error("Email sending error:", error);
+      return res.status(500).json({ error: "Email sending failed. Please try again." });
+    }
     // Hash the password
-    password = await bcrypt.hash(password, 10);
+    // password = await bcrypt.hash(password, 10);
 
     // Upload image to Cloudinary
 
-    let response = await User.create({
-      full_name: full_name,
+    // let response = await User.create({
+    //   full_name: full_name,
 
-      // phone_number: phoneValidationResponse.data.format.international,
-      phone_number: phone_number,
-      role: role.toLowerCase(),
-      email: email.toLowerCase(),
-      password: password,
-    });
+    //   // phone_number: phoneValidationResponse.data.format.international,
+    //   phone_number: phone_number,
+    //   role: role.toLowerCase(),
+    //   email: email.toLowerCase(),
+    //   password: password,
+    // });
 
-    return res.json({ status: 200, message: "User created successfully" });
+    // return res.json({ status: 200, message: "User created successfully" });
   } catch (error) {
     console.error("Error:", error);
     if (error.code === 11000) {
@@ -173,6 +235,65 @@ const register = async (req, res) => {
   }
 };
 
+// create activation token
+const createActivationToken = ({ full_name, phone_number, role, email, password }) => {
+  return jwt.sign({
+    full_name: full_name,
+    phone_number: phone_number,
+    role: role,
+    email: email,
+    password: password
+  }, process.env.ACTIVATION_SECRET, { expiresIn: '5m' });
+};
+
+
+
+// activate user
+const activateUser = async(req,res,next)=>{
+  console.log("activation controller");
+  try {
+    const { activation_token } = req.body;
+    console.log(activation_token);
+    console.log("activation token")
+    let { full_name, phone_number, role, email, password } = jwt.verify(
+      activation_token,
+      process.env.ACTIVATION_SECRET
+    );
+    console.log(full_name, phone_number, role, email, password);
+    console.log("new use kke baad")
+    console.log("new user verified")
+
+
+    if (!full_name) {
+      console.log("no user available");
+      return res.status(401).json({ message: "Invalid token or token expired" });
+    }
+   
+
+    let user = await User.findOne({ email });
+
+    if (user) {
+      console.log("user already exist");
+      return res.status(401).json({ message: "User already Exist" });
+
+    }
+     password = await bcrypt.hash(password, 10);
+    try{
+      user = await User.create({
+        full_name, phone_number, role, email, password
+      });
+      console.log("user created");
+      return res.status(201).json({ message: "Account created successfully" });
+    }catch(e){
+      console.log("exception: " + e)
+    }
+    
+
+    sendToken(user, 201, res);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+}
 
 /**
  * Get email from user for password reset and send OTP to the email
@@ -328,4 +449,5 @@ module.exports = {
   verifyOTP,
   resetPassword,
   logout,
+  activateUser
 };
