@@ -192,7 +192,7 @@ const register = async (req, res) => {
     try {
       await sendMail({
         email: email,
-        subject: "Activate your account",
+        subject: "Confirm your account",
         message: `Hello ${full_name}, please click on the link to activate your account: ${activationUrl}`,
       });
       res.status(201).json({
