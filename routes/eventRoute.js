@@ -11,17 +11,29 @@ router.post(
 
   eventController.createEvent
 );
+
+//all Events by admin
 router.get(
   "/event-list",
   authMiddleware.authenticationVerifier,
   eventController.eventList
 );
+
+
+//all events to show to the user
 router.get(
   "/get-all-events",
   authMiddleware.authenticationVerifier,
   eventController.getAllEvents
   
   )
+
+//booked events by user
+router.get(
+  "/booked-events",
+  authMiddleware.authenticationVerifier,
+  eventController.bookedEvents
+)
 router.put(
   "/update-event",
   uploadMultipleMiddleware,

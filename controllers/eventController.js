@@ -220,6 +220,34 @@ const getAllEvents = async (req, res) => {
 };
 
 
+//booked Events
+const bookedEvents = async (req, res) => {
+  console.log("Getting all events");
+  try {
+    const userId = req.decoded.id; // Assuming user ID is stored in req.user._id
+
+    // Fetch all events from the Event collection
+    const events = await Event.find();
+
+    // Fetch tickets purchased by the user
+    const userTickets = await Ticket.find({ userId });
+    console.log("userTickets: " + userTickets)
+    // // Extract event IDs from userTickets
+    const userEventIds = userTickets.map(ticket => ticket.eventId.toString());
+    console.log("userEventIds: " + userEventIds)
+
+    // // Filter out events that the user has already bought tickets for
+    const bookedEvents = events.filter(event => userEventIds.includes(event._id.toString()));
+    // console.log("filteredEvents: " + filteredEvents)
+
+    res.status(200).json(bookedEvents); // Return the filtered events as JSON
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    res.status(500).json({ error: 'Internal Server Error' }); // Return an error response
+  }
+};
+
+
 
 const getSingleEvent = async (req, res) => {
   try {
@@ -324,5 +352,6 @@ module.exports = {
   eventList,
   getSingleEvent,
   deleteEventImage,
-  getAllEvents
+  getAllEvents,
+  bookedEvents
 };
