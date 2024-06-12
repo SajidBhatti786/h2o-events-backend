@@ -113,8 +113,10 @@ const login = async (req, res) => {
         id: user._id,
         username: user.email,
       },
-      jWT_SECRET
+      jWT_SECRET,
+      { expiresIn: '1d' } // Token expires in 1 minute
     );
+    
     console.log(token);
     console.log(user);
     const { _id, full_name, profileImage, phone_number, email, role } = user;

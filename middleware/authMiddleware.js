@@ -6,13 +6,14 @@ const authenticationVerifier = (req, res, next) => {
   const token = req.headers.authorization;
 
   if (!token) {
-    return res.status(403).json({ message: "No token provided" });
+    return res.status(403).json({statusCode:403, message: "No token provided" });
   }
-console.log("verifying token")
+
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
-    console.log("verifying token")
     if (err) {
-      return res.status(401).json({ message: "Failed to authenticate token" });
+      
+        return res.status(401).json({statusCode:401, message: "Failed to authenticate token" });
+      
     }
     req.decoded = decoded;
     next();
@@ -21,14 +22,11 @@ console.log("verifying token")
 
 const isAdminVerifier = async (req, res, next) => {
   const token = req.headers.authorization;
-  
 
   try {
     // Decode the token to get user ID
-    console.log("verifying token")
-    // console.log(req.body)
     const decoded = jwt.verify(token, JWT_SECRET);
-    console.log("verifying token")    // Fetch the user from the database based on the 'id'
+    // Fetch the user from the database based on the 'id'
     const user = await User.findById(decoded.id);
 
     if (!user) {
@@ -39,17 +37,16 @@ const isAdminVerifier = async (req, res, next) => {
     if (user.role !== "admin") {
       return res
         .status(403)
-        .json({ message: "Unauthorized access. Admin role required." });
+        .json({ statusCode:403,message: "Unauthorized access. Admin role required.",errorCode: "ADMIN_ROLE_REQUIRED" });
     }
 
     // If the user is considered an admin, proceed to the next middleware or route handler
     req.decoded = decoded;
-
     next();
   } catch (error) {
     if (error.name === "JsonWebTokenError") {
       // Token verification failed
-      return res.status(401).json({ message: "Failed to authenticate token" });
+      return res.status(401).json({statusCode:401, message: "Failed to authenticate token" });
     } else {
       console.error(error);
       return res.status(500).json({ message: "Internal Server Error" });

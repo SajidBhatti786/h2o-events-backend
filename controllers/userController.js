@@ -37,6 +37,7 @@ const getSingleUser = async (req, res) => {
 };
 const changeProfileImage = async (req, res) => {
   try {
+    console.log("Changin profile image changed");
     // Assuming the user ID is decoded from the token and available in req.decoded
     const userId = req.decoded.id;
 
@@ -52,6 +53,7 @@ const changeProfileImage = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: "No profile image provided" });
     }
+    console.log("file: ",req.file);
 
     // Upload the new profile image to Cloudinary
     const newImage = await uploadSingleFile(req.file);
