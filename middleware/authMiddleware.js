@@ -41,11 +41,22 @@ const isAdminVerifier = async (req, res, next) => {
     }
 
     // If the user is considered an admin, proceed to the next middleware or route handler
-    req.decoded = decoded;
-    next();
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+      if (err) {
+        console.log("Error: ",err);
+        
+          return res.status(401).json({statusCode:401, message: "Failed to authenticate token" });
+        
+      }
+      console.log("OKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK");
+      req.decoded = decoded;
+      next();
+    });
   } catch (error) {
-    if (error.name === "JsonWebTokenError") {
+    console.log("Error Name: ",error.name);
+    if (error.name === "TokenExpiredError") {
       // Token verification failed
+      console.log("Tokennnnnnn expirrrreeeeed: " + error.name);
       return res.status(401).json({statusCode:401, message: "Failed to authenticate token" });
     } else {
       console.error(error);

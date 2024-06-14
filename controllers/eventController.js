@@ -74,7 +74,7 @@ const createEvent = async (req, res) => {
     const savedEvent = await newEvent.save();
 
     res
-      .status(201)
+      .status(200)
       .json({ message: "Event created successfully", event: savedEvent });
   } catch (error) {
     console.error(error);
@@ -155,10 +155,10 @@ const updateEvent = async (req, res) => {
     // Save the updated event to the database
     const updatedEvent = await existingEvent.save();
 
-    res.json({ message: "Event updated successfully", event: updatedEvent });
+    return res.status(200).json({ message: "Event updated successfully", event: updatedEvent });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
@@ -185,7 +185,7 @@ const eventList = async (req, res) => {
       // Extract events from user tickets
       const userEvents = userTickets.map((ticket) => ticket.eventId);
 
-      return res.json(userEvents);
+      return res.status(200).json(userEvents);
     }
   } catch (error) {
     console.error(error);
@@ -336,7 +336,7 @@ const deleteEventImage = async (req, res) => {
     // Save the updated event to the database
     const updatedEvent = await event.save();
 
-    res.json({
+    res.status(200).json({
       message: "Image deleted successfully",
       event: updatedEvent,
       deletedImage: imageLinkToDelete,
