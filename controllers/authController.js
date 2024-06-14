@@ -114,7 +114,7 @@ const login = async (req, res) => {
         username: user.email,
       },
       jWT_SECRET,
-      { expiresIn: '1m' } // Token expires in 1 day
+      { expiresIn: '1w' } // Token expires in 1 day
     );
     
     console.log(token);
