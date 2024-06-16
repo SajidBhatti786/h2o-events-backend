@@ -3,6 +3,7 @@ const Ticket = require("../models/ticketModel");
 const User = require("../models/userModel");
 const { uploadMultipleFiles } = require("../utils/fileUploadUtil");
 // Controller to create a new event
+
 const createEvent = async (req, res) => {
   try {
     // Assuming the user ID is decoded from the token and available in req.decoded
@@ -54,7 +55,7 @@ const createEvent = async (req, res) => {
     // console.log(newImages);
     const uploadingImages = [];
     for (img in newImages) {
-      uploadingImages.push(newImages[img].imageUrl);
+      uploadingImages.push(newImages[img].url);
     }
     // Saving the new event to the database
     // Creating a new event object
@@ -138,9 +139,10 @@ const updateEvent = async (req, res) => {
     // Update the existing event fields
     const newImages = await uploadMultipleFiles(images);
     // console.log(newImages);
+    console.log("NEW images: " , newImages)
     const uploadingImages = [];
     for (img in newImages) {
-      uploadingImages.push(newImages[img].imageUrl);
+      uploadingImages.push(newImages[img]?.url);
     }
     existingEvent.title = title;
     existingEvent.description = description;
