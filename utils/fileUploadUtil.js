@@ -50,25 +50,30 @@ const uploadSingleFile = async (file) => {
 const uploadMultipleFiles = async (files) => {
   const uploadedFilesInfo = [];
   console.log(files);
+  console.log("multipart upload")
 
   try {
     await Promise.all(
       files.map(async (file) => {
         const result = await new Promise((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream(
+           
             {
               folder: "images",
               public_id: `${Date.now()}`,
               resource_type: "auto",
               encoding: "7bit",
             },
-            (error, result) => {
+            
+            
+           (error, result)=> {
               if (error) {
                 reject(error);
               } else {
                 resolve(result);
               }
             }
+            
           );
 
           streamifier.createReadStream(file.buffer).pipe(stream);
@@ -89,7 +94,7 @@ const uploadMultipleFiles = async (files) => {
 };
 
 const uploadSingleMiddleware = upload.single("image"); // Middleware for single file upload
-const uploadMultipleMiddleware = upload.array("images"); // Middleware for multiple file upload
+const uploadMultipleMiddleware = upload.array("mediaFiles"); // Middleware for multiple file upload
 
 module.exports = {
   uploadSingleFile,
