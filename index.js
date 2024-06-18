@@ -30,6 +30,8 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.use(bodyParser.urlencoded({ extended: true, limit: "150mb" }));
+
 app.use((req, res, next) => {
   res.header({"Access-Control-Allow-Origin": "*"});
   next();
