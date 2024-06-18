@@ -27,44 +27,44 @@ const upload = multer({ storage: storage });
 
 const compressVideo = (inputBuffer, mimeType) => {
   const ff = ffmpeg(inputBuffer)
-  .fps(30)
-  .addOptions(["-crf 28"])
-  .on("end", () => { 
-    endProcess({ statusCode: 200, text: "Success" });
-    
-  })
-  .on("error", (err) => {
-    endProcess({ statusCode: 500, text: err.message });
-  })
+    .fps(30)
+    .addOptions(["-crf 28"])
+    .on("end", () => {
+      endProcess({ statusCode: 200, text: "Success" });
+
+    })
+    .on("error", (err) => {
+      endProcess({ statusCode: 500, text: err.message });
+    })
 
   return ff;
 };
 
 
-  // console.log('mimeType: ' + mimeType)
-  // return new Promise((resolve, reject) => {
-  //   const chunks = [];
-  //   const stream = ffmpeg()
-  //   process.then(() =>{
-  //     console.log('process.then()')
+// console.log('mimeType: ' + mimeType)
+// return new Promise((resolve, reject) => {
+//   const chunks = [];
+//   const stream = ffmpeg()
+//   process.then(() =>{
+//     console.log('process.then()')
 
-  //   })
-  //     .input(streamifier.createReadStream(inputBuffer))
-  //     .inputFormat('mov')
-  //     .videoCodec('libx264')
-  //     .size('1280x?') // Resize to width 1280px, maintaining aspect ratio
-  //     .format('mp4') // Output format
-  //     .on('error', (err) => {
-  //       reject(err);
-  //     })
-  //     .on('end', () => {
-  //       resolve(Buffer.concat(chunks));
-  //     })
-  //     .pipe()
-  //     .on('data', (chunk) => {
-  //       chunks.push(chunk);
-  //     });
-  // });
+//   })
+//     .input(streamifier.createReadStream(inputBuffer))
+//     .inputFormat('mov')
+//     .videoCodec('libx264')
+//     .size('1280x?') // Resize to width 1280px, maintaining aspect ratio
+//     .format('mp4') // Output format
+//     .on('error', (err) => {
+//       reject(err);
+//     })
+//     .on('end', () => {
+//       resolve(Buffer.concat(chunks));
+//     })
+//     .pipe()
+//     .on('data', (chunk) => {
+//       chunks.push(chunk);
+//     });
+// });
 // };
 
 
@@ -152,6 +152,9 @@ const uploadMultipleFiles = async (files) => {
     throw new Error("Failed to upload files to Cloudinary");
   }
 };
+
+
+
 const uploadSingleMiddleware = upload.single("image"); // Middleware for single file upload
 const uploadMultipleMiddleware = upload.array("mediaFiles"); // Middleware for multiple file upload
 
