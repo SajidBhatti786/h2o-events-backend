@@ -30,7 +30,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(bodyParser.urlencoded({ extended: true, limit: "150mb" }));
 
 app.use((req, res, next) => {
   res.header({"Access-Control-Allow-Origin": "*"});
@@ -38,6 +37,8 @@ app.use((req, res, next) => {
 }) 
 app.use(express.static(path.join(__dirname, "static")));
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true, limit: "150mb" }));
+app.use(bodyParser.json({limit: '150mb'}));
 
 // Connect to the database before starting the server
 const startServer = async () => {
