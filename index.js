@@ -39,6 +39,8 @@ app.use(express.static(path.join(__dirname, "static")));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true, limit: "150mb" }));
 app.use(bodyParser.json({limit: '150mb'}));
+app.use(express.json({ limit: '150mb' })); // Adjust the limit as needed
+app.use(express.urlencoded({ limit: '150mb', extended: true }));
 
 // Connect to the database before starting the server
 const startServer = async () => {
