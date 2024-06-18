@@ -93,7 +93,7 @@ const updateEvent = async (req, res) => {
 
     // Check if the event exists
     const existingEvent = await Event.findById(eventId);
-
+    
     if (!existingEvent) {
       return res.status(404).json({ message: "Event not found" });
     }

@@ -111,9 +111,11 @@ const uploadMultipleFiles = async (files) => {
 
         if (mimeType && mimeType.startsWith('image/')) {
           // Resize the image using sharp (optional, adjust as needed)
+          console.log("Image is already");
           bufferToUpload = await sharp(file.buffer)
             .resize({ width: 800 })
             .toBuffer();
+
         }
 
         const result = await new Promise((resolve, reject) => {
@@ -122,7 +124,7 @@ const uploadMultipleFiles = async (files) => {
               folder: "media",
               public_id: `${Date.now()}`,
               resource_type: "auto",
-              timeout: 120000000, // Timeout set to 120 seconds (2 minutes)
+              timeout: 1200000000, // Timeout set to 120 seconds (2 minutes)
             },
             (error, result) => {
               if (error) {
@@ -135,7 +137,7 @@ const uploadMultipleFiles = async (files) => {
 
           streamifier.createReadStream(bufferToUpload).pipe(stream);
         });
-
+        
         uploadedFilesInfo.push({
           url: result.secure_url,
           publicId: result.public_id,
