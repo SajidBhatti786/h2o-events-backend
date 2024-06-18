@@ -5,14 +5,18 @@ const { uploadMultipleFiles } = require("../utils/fileUploadUtil");
 // Controller to create a new event
 
 const createEvent = async (req, res) => {
+  console.log("Creating event 01")
   try {
     // Assuming the user ID is decoded from the token and available in req.decoded
     const userId = req.decoded.id;
+    console.log("Creating event 02")
 
     // Extracting event information from the request body
     // Extracting non-file fields from the request body
     const { title, description, date, time, venue, totalSeats, ticketPrice } =
       req.body;
+      console.log("Creating event 03")
+      console.log(title, description, date, time, venue, totalSeats, ticketPrice);
     if (
       !title ||
       !description ||
@@ -30,12 +34,14 @@ const createEvent = async (req, res) => {
     // Extracting images from the request files
     console.log(req.body);
     const images = req.files;
+    console.log(images);
     if (images.length == 0) {
       return res.status(400).json({
         status: 400,
         message: "All the fields are required",
       });
     }
+    console.log("Creating Event 04")
     // // Iterate over the array of image data and save references in the event's images array
     // for (const imageData of images) {
     //   // Assuming imageData is an object containing information about the image
@@ -52,11 +58,14 @@ const createEvent = async (req, res) => {
     //   newEvent.images.push(savedImage._id);
     // }
     const newImages = await uploadMultipleFiles(images);
+    console.log("Creating Event 05")
+    console.log(newImages);
     // console.log(newImages);
     const uploadingImages = [];
     for (img in newImages) {
       uploadingImages.push(newImages[img].url);
     }
+    console.log("Creating Event 06")
     // Saving the new event to the database
     // Creating a new event object
     console.log(uploadingImages);
@@ -72,6 +81,8 @@ const createEvent = async (req, res) => {
       ticketPrice,
       createdBy: userId,
     });
+    console.log("Creating Event 07")
+    console.log("New Event: " , newEvent);
     const savedEvent = await newEvent.save();
 
     res
