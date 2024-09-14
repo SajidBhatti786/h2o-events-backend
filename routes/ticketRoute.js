@@ -13,5 +13,10 @@ router.get(
   authMiddleware.isAdminVerifier,
   ticketController.getUsersWithTicketsForEvent
 );
+router.get(
+  '/:eventId/registrations',
+  authMiddleware.authenticationVerifier,
+  ticketController.getUsersWithTicketsForEvent
+)
 
 module.exports = router;
